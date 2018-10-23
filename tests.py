@@ -93,6 +93,9 @@ class TestComments(TestHelper):
 	def test_comment_creation_time_property(self):
 		self.time_property(Comment, self.comments.create_comment, 'creation')
 
+	def test_comment_edit_time_property(self):
+		self.time_property(Comment, self.comments.create_comment, 'edit')
+
 	# string properties
 	def test_comment_body_property(self):
 		self.string_property(
