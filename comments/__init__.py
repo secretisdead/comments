@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from sqlalchemy import Table, Column, LargeBinary
 from sqlalchemy import Integer, String, MetaData, distinct
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import func, and_
+from sqlalchemy.sql import func, and_, or_
 
 from statement_helper import sort_statement, paginate_statement, id_filter
 from statement_helper import time_cutoff_filter, string_like_filter
@@ -253,6 +253,29 @@ class Comments:
 		self.connection.execute(
 			self.comments.delete().where(self.comments.c.id == id)
 		)
+
+	#TODO tests
+	def get_subject_comment_counts(self, subject_ids):
+		if list != type(subject_ids):
+			subject_ids = [subject_ids]
+		conditions = []
+		for subject_id in subject_ids:
+			subject_id, subject_id_bytes = parse_id(subject_id)
+			conditions.append(self.comments.c.subject_id == subject_id_bytes)
+		statement = self.comments.select().where(
+			or_(*conditions)
+		).with_only_columns(
+			[self.comments.c.subject_id, func.count(self.comments.c.id)]
+		).group_by(
+			self.comments.c.subject_id
+		)
+		result = self.connection.execute(statement).fetchall()
+		comment_counts = {}
+		for row in result:
+			subject_id, count = row
+			subject_id, subject_id_bytes = parse_id(subject_id)
+			comment_counts[subject_id] = count
+		return comment_counts
 
 	# anonymization
 	def anonymize_id(self, id, new_id=None):
