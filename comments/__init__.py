@@ -6,7 +6,7 @@ from enum import Enum
 from datetime import datetime, timezone
 
 from sqlalchemy import Table, Column, LargeBinary
-from sqlalchemy import Integer, String, MetaData, distinct
+from sqlalchemy import Integer, String, MetaData
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import func, and_, or_
 
