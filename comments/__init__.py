@@ -255,6 +255,30 @@ class Comments:
 		)
 
 	#TODO tests
+	def delete_user_comments(self, user_id):
+		try:
+			user_id = get_id_bytes(user_id)
+		#TODO narrow catch
+		except:
+			return
+		self.connection.execute(
+			self.comments.delete().where(self.comments.c.user_id == user_id)
+		)
+
+	#TODO tests
+	def delete_remote_origin_comments(self, remote_origin):
+		try:
+			remote_origin = ip_address(remote_origin)
+		#TODO narrow catch
+		except:
+			return
+		self.connection.execute(
+			self.comments.delete().where(
+				self.comments.c.remote_origin == remote_origin.packed,
+			)
+		)
+
+	#TODO tests
 	def get_subject_comment_counts(self, subject_ids):
 		if list != type(subject_ids):
 			subject_ids = [subject_ids]
