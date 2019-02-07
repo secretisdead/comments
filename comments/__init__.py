@@ -5,8 +5,9 @@ from ipaddress import ip_address
 from enum import Enum
 from datetime import datetime, timezone
 
-from sqlalchemy import Table, Column, LargeBinary
+from sqlalchemy import Table, Column, PrimaryKeyConstraint, Binary as sqla_binary
 from sqlalchemy import Integer, String, MetaData
+from sqlalchemy.dialects.mysql import VARBINARY as mysql_binary
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import func, and_, or_
 
@@ -66,51 +67,36 @@ class Comments:
 
 		default_bytes = 0b0 * 16
 
+		if 'mysql' == self.engine_session.bind.dialect.name:
+			Binary = mysql_binary
+		else:
+			Binary = sqla_binary
+
 		# comments tables
 		self.comments = Table(
 			self.db_prefix + 'comments',
 			metadata,
-			Column(
-				'id',
-				LargeBinary(16),
-				primary_key=True,
-				default=default_bytes
-			),
+			Column('id', Binary(16), default=default_bytes),
 			Column('creation_time', Integer, default=0),
 			Column('edit_time', Integer, default=0),
-			Column(
-				'subject_id',
-				LargeBinary(16),
-				default=default_bytes
-			),
+			Column('subject_id', Binary(16), default=default_bytes),
 			Column(
 				'remote_origin',
-				LargeBinary(16),
-				default=ip_address(default_bytes)
+				Binary(16),
+				default=ip_address(default_bytes).packed,
 			),
-			Column(
-				'user_id',
-				LargeBinary(16),
-				default=default_bytes
-			),
+			Column('user_id', Binary(16), default=default_bytes),
 			Column('body', String(self.body_length)),
+			PrimaryKeyConstraint('id'),
 		)
 
 		self.connection = self.engine.connect()
 
 		if install:
-			table_exists = self.engine.dialect.has_table(
-				self.engine,
-				self.db_prefix + 'comments'
-			)
-			if not table_exists:
-				metadata.create_all(self.engine)
+			self.comments.create(bind=self.engine, checkfirst=True)
 
 	def uninstall(self):
-		for table in [
-				self.comments,
-			]:
-			table.drop(self.engine)
+		self.comments.drop(self.engine)
 
 	# retrieve comments
 	def get_comment(self, id):
