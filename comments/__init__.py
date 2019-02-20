@@ -55,7 +55,14 @@ class Comment:
 		self.body = str(body)
 
 class Comments:
-	def __init__(self, engine, db_prefix='', install=False, remote_origin=None):
+	def __init__(
+			self,
+			engine,
+			db_prefix='',
+			install=False,
+			remote_origin=None,
+			connection=None,
+		):
 		self.engine = engine
 		self.engine_session = sessionmaker(bind=self.engine)()
 
@@ -90,7 +97,10 @@ class Comments:
 			PrimaryKeyConstraint('id'),
 		)
 
-		self.connection = self.engine.connect()
+		if connection:
+			self.connection = connection
+		else:
+			self.connection = self.engine.connect()
 
 		if install:
 			self.comments.create(bind=self.engine, checkfirst=True)
